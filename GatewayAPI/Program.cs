@@ -1,3 +1,6 @@
+using Domain;
+using Domain.Services;
+using Domain.Services.Interfaces;
 using GatewayAPI.Extensions;
 using GatewayAPI.Extensions.SwaggerConfigurations;
 
@@ -26,10 +29,17 @@ public class Program
        // builder.Services.AddRepository(builder.Configuration);
 
         // Registrar serviços e MediatR do domínio
-       // builder.Services.AddDomain(builder.Configuration);
+        builder.Services.AddDomain(builder.Configuration);
 
         // Registrar autenticação JWT (separado)
         builder.Services.AddJwtAuthentication(builder.Configuration);
+
+        builder.Services.AddReverseProxy().LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+
+        builder.Services.AddHttpClient<IIdentityService, IdentityService>(client =>
+        {
+            client.BaseAddress = new Uri("https://localhost:44372");
+        });
 
         var app = builder.Build();
 
