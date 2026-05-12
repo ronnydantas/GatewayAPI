@@ -1,5 +1,5 @@
-﻿using Domain.DTOs;
-using Domain.UseCases.Identitys;
+﻿using Domain.UseCases.Identitys;
+using Domain.UseCases.Login;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,6 +19,14 @@ public class IdentityController : ControllerBase
 
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] SignUpCommand model)
+    {
+        var user = await _mediator.Send(model);
+
+        return Ok(user);
+    }
+
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] SignInCommand model)
     {
         var user = await _mediator.Send(model);
 

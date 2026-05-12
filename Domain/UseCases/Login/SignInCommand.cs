@@ -1,0 +1,9 @@
+﻿using MediatR;
+
+namespace Domain.UseCases.Login;
+
+public class SignInCommand: IRequest<SignInViewModel>
+{
+    public string Email { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
+}

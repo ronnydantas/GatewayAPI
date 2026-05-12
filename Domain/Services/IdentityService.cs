@@ -1,5 +1,6 @@
 ﻿using Domain.Services.Interfaces;
 using Domain.UseCases.Identitys;
+using Domain.UseCases.Login;
 using System.Net.Http.Json;
 using System.Text.Json;
 
@@ -14,32 +15,18 @@ public class IdentityService : IIdentityService
         _httpClient = httpClient;
     }
 
-    public async Task<SignUpVielModel> SignUp(SignUpCommand command)
+    public async Task<SignInViewModel> SignIn(SignInCommand command)
     {
         try
         {
-            // 🔥 VER JSON ENVIADO
-            var commandJson = JsonSerializer.Serialize(command);
 
-            Console.WriteLine("JSON ENVIADO:");
-            Console.WriteLine(commandJson);
+            var response = await _httpClient.PostAsJsonAsync("/identity-api/api/Auth/login", command);
 
-            var response = await _httpClient.PostAsJsonAsync("/identity-api/api/Auth/register", command);
-
-
-            // 🔥 VER STATUS
-            Console.WriteLine($"STATUS: {response.StatusCode}");
-
-            // 🔥 VER BODY DE ERRO
             var responseContent = await response.Content.ReadAsStringAsync();
-
-            Console.WriteLine("RESPOSTA:");
-            Console.WriteLine(responseContent);
 
             response.EnsureSuccessStatusCode();
 
-            var result = await response.Content
-                .ReadFromJsonAsync<SignUpVielModel>();
+            var result = await response.Content.ReadFromJsonAsync<SignInViewModel>();
 
             return result!;
         }
@@ -47,9 +34,30 @@ public class IdentityService : IIdentityService
         {
             Console.WriteLine(ex);
 
-            throw new ApplicationException(
-                "Erro ao cadastrar usuário.",
-                ex);
+            throw new ApplicationException("Erro ao cadastrar usuário.", ex);
+        }
+    }
+
+    public async Task<SignUpVielModel> SignUp(SignUpCommand command)
+    {
+        try
+        {
+
+            var response = await _httpClient.PostAsJsonAsync("/identity-api/api/Auth/register", command);
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+
+            response.EnsureSuccessStatusCode();
+
+            var result = await response.Content.ReadFromJsonAsync<SignUpVielModel>();
+
+            return result!;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+
+            throw new ApplicationException("Erro ao cadastrar usuário.", ex);
         }
     }
 }
