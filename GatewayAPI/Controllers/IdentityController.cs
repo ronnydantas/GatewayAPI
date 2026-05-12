@@ -1,6 +1,8 @@
-﻿using Domain.UseCases.Identitys;
+﻿using Domain.UseCases.GetUserInfo;
+using Domain.UseCases.Identitys;
 using Domain.UseCases.Login;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GatewayAPI.Controllers;
@@ -29,6 +31,15 @@ public class IdentityController : ControllerBase
     public async Task<IActionResult> Login([FromBody] SignInCommand model)
     {
         var user = await _mediator.Send(model);
+
+        return Ok(user);
+    }
+
+    [Authorize]
+    [HttpGet("auth-me")]
+    public async Task<IActionResult> AuthMe()
+    {
+        var user = await _mediator.Send(new GetUserInfoQuery());
 
         return Ok(user);
     }
