@@ -4,6 +4,7 @@ using Domain.Services.Interfaces;
 using GatewayAPI.Extensions;
 using GatewayAPI.Extensions.SwaggerConfigurations;
 
+
 /// <summary>
 /// Classe principal do aplicativo Gateway API.
 /// </summary>
@@ -17,52 +18,109 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        // Configuração de serviços
+        // =========================================
+        // Controllers + Swagger
+        // =========================================
         builder.Services
-            .AddSwaggerConfig(builder.Configuration)
             .AddControllers();
 
+        builder.Services
+            .AddSwaggerConfig(builder.Configuration);
+
+        // =========================================
+        // CORS
+        // =========================================
         builder.Services.AddCustomCors();
 
-
-        // Depois registre seus repositórios/serviços que dependem de SignInManager/UserManager
-       // builder.Services.AddRepository(builder.Configuration);
-
-        // Registrar serviços e MediatR do domínio
+        // =========================================
+        // MediatR / Domain
+        // =========================================
         builder.Services.AddDomain(builder.Configuration);
 
-        // Registrar autenticação JWT (separado)
+        // =========================================
+        // JWT Authentication
+        // =========================================
         builder.Services.AddJwtAuthentication(builder.Configuration);
 
-        builder.Services.AddReverseProxy().LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+        // =========================================
+        // HttpContextAccessor
+        // =========================================
+        builder.Services.AddHttpContextAccessor();
 
-        builder.Services.AddHttpClient<IIdentityService, IdentityService>(client =>
-        {
-            client.BaseAddress = new Uri("https://localhost:44372");
-        });
+        // =========================================
+        // Token Accessor
+        // =========================================
+        builder.Services.AddScoped<ITokenAccessor, TokenAccessor>();
+
+        // =========================================
+        // Reverse Proxy (YARP)
+        // =========================================
+        builder.Services
+            .AddReverseProxy()
+            .LoadFromConfig(
+                builder.Configuration.GetSection("ReverseProxy"));
+
+        // =========================================
+        // Identity API
+        // =========================================
+        builder.Services.AddHttpClient<IIdentityService, IdentityService>(
+            client =>
+            {
+                client.BaseAddress = new Uri(
+                    builder.Configuration["Services:IdentityApi"]!);
+            });
+
+        // =========================================
+        // User Service
+        // =========================================
+        builder.Services.AddHttpClient<IPersonService, PersonService>(
+            client =>
+            {
+                client.BaseAddress = new Uri(
+                    builder.Configuration["Services:UserService"]!);
+            });
 
         var app = builder.Build();
 
-        // Ajuste do caminho base para o nome correto do projeto
+        // =========================================
+        // Base Path
+        // =========================================
         app.UsePathBase("/gateway-api");
 
+        // =========================================
+        // Swagger
+        // =========================================
+        app.UseSwagger();
+
+        app.UseSwaggerUI(options =>
+        {
+            options.SwaggerEndpoint(
+                "/gateway-api/swagger/v1/swagger.json",
+                "Gateway API V1");
+
+            options.RoutePrefix = string.Empty;
+        });
+
+        // =========================================
+        // Middlewares
+        // =========================================
         app.UseCustomCors();
 
         app.UseRouting();
 
-        // Swagger
-        app.UseSwagger();
-        app.UseSwaggerUI(options =>
-        {
-            options.SwaggerEndpoint("/gateway-api/swagger/v1/swagger.json", "Gateway API V1");
-            options.RoutePrefix = string.Empty;
-        });
-
-        // Adiciona autenticação e autorização JWT
         app.UseAuthentication();
+
         app.UseAuthorization();
 
+        // =========================================
+        // Controllers
+        // =========================================
         app.MapControllers();
+
+        // =========================================
+        // Reverse Proxy
+        // =========================================
+        app.MapReverseProxy();
 
         await app.RunAsync();
     }
