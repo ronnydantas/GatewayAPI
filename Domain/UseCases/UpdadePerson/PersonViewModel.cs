@@ -1,6 +1,24 @@
 ﻿namespace Domain.UseCases.UpdadePerson;
 
-public class PersonViewModel
+public record class PersonViewModel
 {
-    public PersonCommand Cliente { get; set; } = new();
+    public string Id { get; set; } = string.Empty;
+
+    public string Name { get; set; } = string.Empty;
+
+    public string FullName { get; set; } = string.Empty;
+
+    public string Email { get; set; } = string.Empty;
+
+    public string Phone { get; set; } = string.Empty;
+
+    public DateOnly BirthDate { get; set; }
+
+    public DateTime RegistrationDate { get; set; }
+
+    public bool Allergy { get; set; }
+
+    public string Observation { get; set; } = string.Empty;
+
+    public string Gender { get; set; } = string.Empty;
 }

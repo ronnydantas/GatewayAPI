@@ -16,6 +16,8 @@ public class PersonUpdateUseCase : IRequestHandler<PersonCommand, PersonViewMode
     public async Task<PersonViewModel> Handle(PersonCommand request, CancellationToken cancellationToken)
     {
         var token = _tokenAccessor.GetToken();
+
         return await _personSevice.UpdateCliente(request, token);
+
     }
 }

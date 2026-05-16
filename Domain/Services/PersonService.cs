@@ -1,4 +1,5 @@
 ﻿using Domain.Services.Interfaces;
+using Domain.Shareds;
 using Domain.UseCases.UpdadePerson;
 using System.Net.Http.Headers;
 using System.Text;
@@ -15,15 +16,10 @@ public class PersonService : IPersonService
         _httpClient = httpClient;
     }
 
-    public async Task<PersonViewModel> UpdateCliente(
-        PersonCommand cliente,
-        string token)
+    public async Task<PersonViewModel> UpdateCliente(PersonCommand cliente, string token)
     {
         try
         {
-            // =========================================
-            // PAYLOAD EXATO ESPERADO PELA API
-            // =========================================
             var body = new
             {
                 cliente = new
@@ -37,64 +33,36 @@ public class PersonService : IPersonService
                 }
             };
 
-            // =========================================
-            // SERIALIZA JSON
-            // =========================================
-            var payload = JsonSerializer.Serialize(
-                body,
+            var payload = JsonSerializer.Serialize(body,
                 new JsonSerializerOptions
                 {
                     PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                     WriteIndented = true
                 });
 
-            Console.WriteLine("PAYLOAD ENVIADO:");
-            Console.WriteLine(payload);
+            var request = new HttpRequestMessage(HttpMethod.Put, $"/user-service/api/v1/Person/{cliente.Id}");
 
-            // =========================================
-            // REQUEST
-            // =========================================
-            var request = new HttpRequestMessage(
-                HttpMethod.Put,
-                $"/user-service/api/v1/Person/{cliente.Id}");
+            request.Headers.Authorization =new AuthenticationHeaderValue("Bearer", token);
 
-            request.Headers.Authorization =
-                new AuthenticationHeaderValue(
-                    "Bearer",
-                    token);
+            request.Content = new StringContent(payload, Encoding.UTF8, "application/json");
 
-            request.Content = new StringContent(
-                payload,
-                Encoding.UTF8,
-                "application/json");
+            var response = await _httpClient.SendAsync(request);
 
-            // =========================================
-            // RESPONSE
-            // =========================================
-            var response =
-                await _httpClient.SendAsync(request);
-
-            var responseContent =
-                await response.Content.ReadAsStringAsync();
-
-            Console.WriteLine("STATUS:");
-            Console.WriteLine(response.StatusCode);
-
-            Console.WriteLine("RESPONSE:");
-            Console.WriteLine(responseContent);
+            var responseContent = await response.Content.ReadAsStringAsync();
 
             response.EnsureSuccessStatusCode();
 
-            return JsonSerializer.Deserialize<PersonViewModel>(
-                responseContent)!;
+            var result = JsonSerializer.Deserialize<ApiResponse<PersonViewModel>>( responseContent,
+                    new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+
+            return result!.Data;
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex);
-
-            throw new ApplicationException(
-                "Erro ao atualizar cliente.",
-                ex);
+            throw new ApplicationException( "Erro ao atualizar cliente.", ex);
         }
     }
 }

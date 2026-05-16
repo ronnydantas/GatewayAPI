@@ -17,10 +17,10 @@ public class PersonController : ControllerBase
     }
 
     [Authorize]
-    [HttpPut("update-register")]
-    public async Task<IActionResult> UpdateRegister([FromRoute] Guid id, [FromBody] PersonCommand cliente)
+    [HttpPut("update-register/{id}")]
+    public async Task<IActionResult> UpdateRegister(string id, [FromBody] PersonCommand cliente)
     {
-        cliente.Id.ToString();
+        cliente.Id = id;
         var user = await _mediator.Send(cliente);
 
         return Ok(user);

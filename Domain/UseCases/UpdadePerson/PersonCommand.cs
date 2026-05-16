@@ -1,5 +1,4 @@
 ﻿using MediatR;
-using System.Security.Cryptography.X509Certificates;
 
 namespace Domain.UseCases.UpdadePerson;
 
